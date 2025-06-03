@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery } from "react-query"
+import { useQuery, useQueryClient } from "react-query"
 import { Search, Plus, Filter, Download } from "lucide-react"
 import { customersAPI } from "../services/api"
 import LoadingSpinner from "../components/LoadingSpinner"
@@ -12,15 +12,26 @@ const Customers = () => {
   const [search, setSearch] = useState("")
   const [showModal, setShowModal] = useState(false)
   const limit = 10
+  const queryClient = useQueryClient()
 
   // Fetch customers with pagination and search
-  const { data, isLoading, refetch } = useQuery(
+  const { data, isLoading } = useQuery(
     ["customers", page, search],
     () => customersAPI.getAll({ page, limit, search }),
     {
       keepPreviousData: true,
-      staleTime: 5 * 60 * 1000,
-    },
+      staleTime: 1000, // Set a lower stale time for more frequent updates
+      refetchInterval: 5000, // Refetch every 5 seconds
+      onSuccess: (data) => {
+        // Prefetch next page
+        const nextPage = page + 1
+        if (nextPage <= Math.ceil(data.data.pagination.total / limit)) {
+          queryClient.prefetchQuery(["customers", nextPage, search], () =>
+            customersAPI.getAll({ page: nextPage, limit, search })
+          )
+        }
+      }
+    }
   )
 
   const customers = data?.data?.customers || []
@@ -197,7 +208,6 @@ const Customers = () => {
           onClose={() => setShowModal(false)}
           onSuccess={() => {
             setShowModal(false)
-            refetch()
           }}
         />
       )}

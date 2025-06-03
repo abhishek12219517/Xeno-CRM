@@ -6,39 +6,47 @@ import { X } from "lucide-react"
 import { customersAPI } from "../services/api"
 import toast from "react-hot-toast"
 import LoadingSpinner from "./LoadingSpinner"
+import { useMutation, useQueryClient } from "react-query"
 
 const CustomerModal = ({ onClose, onSuccess }) => {
-  const [loading, setLoading] = useState(false)
+  const queryClient = useQueryClient()
   const {
     register,
     handleSubmit,
     formState: { errors },
   } = useForm()
 
-  const onSubmit = async (data) => {
-    try {
-      setLoading(true)
-
-      // Process tags: convert comma-separated string to array
-      const processedData = {
-        ...data,
-        tags: data.tags
-          ? data.tags
-              .split(",")
-              .map((tag) => tag.trim())
-              .filter((tag) => tag.length > 0)
-          : [],
+  // Create customer mutation
+  const { mutate, isLoading } = useMutation(
+    (data) => customersAPI.create(data),
+    {
+      onSuccess: () => {
+        // Invalidate and refetch customers queries
+        queryClient.invalidateQueries("customers")
+        queryClient.invalidateQueries("dashboard-customers")
+        toast.success("Customer created successfully!")
+        onSuccess()
+      },
+      onError: (error) => {
+        console.error("Create customer error:", error)
+        toast.error(error.response?.data?.error || "Failed to create customer")
       }
-
-      await customersAPI.create(processedData)
-      toast.success("Customer created successfully!")
-      onSuccess()
-    } catch (error) {
-      console.error("Create customer error:", error)
-      toast.error(error.response?.data?.error || "Failed to create customer")
-    } finally {
-      setLoading(false)
     }
+  )
+
+  const onSubmit = async (data) => {
+    // Process tags: convert comma-separated string to array
+    const processedData = {
+      ...data,
+      tags: data.tags
+        ? data.tags
+            .split(",")
+            .map((tag) => tag.trim())
+            .filter((tag) => tag.length > 0)
+        : [],
+    }
+
+    mutate(processedData)
   }
 
   return (
@@ -97,11 +105,11 @@ const CustomerModal = ({ onClose, onSuccess }) => {
           </div>
 
           <div className="flex justify-end space-x-3 pt-4">
-            <button type="button" onClick={onClose} className="btn-secondary" disabled={loading}>
+            <button type="button" onClick={onClose} className="btn-secondary" disabled={isLoading}>
               Cancel
             </button>
-            <button type="submit" className="btn-primary flex items-center" disabled={loading}>
-              {loading && <LoadingSpinner size="small" className="mr-2" />}
+            <button type="submit" className="btn-primary flex items-center" disabled={isLoading}>
+              {isLoading && <LoadingSpinner size="small" className="mr-2" />}
               Create Customer
             </button>
           </div>
