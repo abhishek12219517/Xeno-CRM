@@ -84,6 +84,16 @@ app.get("/health", (req, res) => {
   })
 })
 
+// Test route for verifying deployment
+app.get("/api/test", (req, res) => {
+  res.status(200).json({
+    status: "success",
+    message: "Backend API is working!",
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  })
+})
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   console.error("Error:", err)
