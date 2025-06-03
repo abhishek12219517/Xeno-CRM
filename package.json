@@ -1,0 +1,12 @@
+{
+  "name": "xeno-crm-platform",
+  "version": "1.0.0",
+  "description": "A comprehensive Mini CRM Platform built for the Xeno SDE Internship Assignment 2025. This platform enables customer segmentation, personalized campaign delivery, and intelligent insights using modern web technologies.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
